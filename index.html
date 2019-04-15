@@ -54,21 +54,7 @@
             const layer = new FeatureLayer("https://services.arcgis.com/zmLUiqh7X11gGV2d/arcgis/rest/services/Woodstock/FeatureServer/2");
             map.addLayer(layer);
 
-            const SELECTED_ADDRESS_SYMBOL = new SimpleMarkerSymbol({
-                name: "selectedAddress",
-                color: [255, 30, 30, 0],
-                size: 10,
-                type: "esriSMS",
-                style: "esriSMSCircle",
-                outline: {
-                    color: [255, 30, 39, 255],
-                    width: 1,
-                    type: "esriSLS",
-                    style: "esriSLSSolid"
-                }
-            });
-
-            const NEW_ADDRESS_SYMBOL = new SimpleMarkerSymbol({
+            const CENTROID_SYMBOL = new SimpleMarkerSymbol({
                 name: "newAddress",
                 color: [255, 30, 30, 0],
                 size: 5,
@@ -82,7 +68,21 @@
                 }
             })
 
-            const SELECTED_PARCEL_SYMBOL = new SimpleFillSymbol({
+            const EXTENT_CENTRE_SYMBOL = new SimpleMarkerSymbol({
+                name: "newAddress",
+                color: [255, 30, 30, 0],
+                size: 5,
+                type: "esriSMS",
+                style: "esriSMSSquare",
+                outline: {
+                    color: [0, 0, 0, 255],
+                    width: 1,
+                    type: "esriSLS",
+                    style: "esriSLSSolid"
+                }
+            })
+
+            const PARCEL_SYMBOL = new SimpleFillSymbol({
                 name: "selectedParcel",
                 color: [255, 30, 30, 255],
                 style: "esriSFSNull",
@@ -94,10 +94,19 @@
                 }
             });
 
-            _onGetCentroid = function(event) {
-                // alert("hi");
-                // console.log("map", map);
+            const EXTENT_SYMBOL = new SimpleFillSymbol({
+                name: "selectedParcel",
+                color: [255, 30, 30, 255],
+                style: "esriSFSNull",
+                outline: {
+                    color: [0, 0, 0, 127],
+                    width: 1,
+                    type: "esriSLS",
+                    style: "esriSLSSolid"
+                }
+            });
 
+            _onGetCentroid = function(event) {
                 const draw = new Draw(this.map);
                 map.setInfoWindowOnClick(false);
                 map.infoWindow.hide();
@@ -121,15 +130,50 @@
                         ([parcel]) => {
                             console.log("parcel", parcel);
                             if (parcel) {
-                                map.graphics.add(new Graphic(parcel.geometry, SELECTED_PARCEL_SYMBOL));
+                                map.graphics.add(new Graphic(parcel.geometry, PARCEL_SYMBOL));
 
-                                const centroid = parcel.geometry.getCentroid(); //getExtent().getCenter(); 
-                                map.graphics.add(new Graphic(centroid, NEW_ADDRESS_SYMBOL));
+                                const centroid = parcel.geometry.getCentroid();
+                                map.graphics.add(new Graphic(centroid, CENTROID_SYMBOL));
                             }
                         }
                     )
                 }
             };
+
+            _onExtentCentre = function(event) {
+                const draw = new Draw(this.map);
+                map.setInfoWindowOnClick(false);
+                map.infoWindow.hide();
+
+                let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, addToMap));
+                draw.activate(Draw.POINT);
+
+                function addToMap(event) {
+                    draw.deactivate();
+                    drawDrawEnd.remove();
+
+                    const q = new Query();
+                    q.outFields = ["OBJECTID"];
+                    q.where = "1=1";
+                    q.geometry = event.geometry;
+                    q.spatialRelationship = "esriSpatialRelIntersects";
+                    q.returnGeometry = true;
+
+                    layer.selectFeatures(
+                        q, FeatureLayer.SELECTION_NEW,
+                        ([parcel]) => {
+                            console.log("parcel", parcel);
+                            if (parcel) {
+                                const extent = parcel.geometry.getExtent();
+                                map.graphics.add(new Graphic(extent, EXTENT_SYMBOL));
+
+                                const centroid = extent.getCenter();
+                                map.graphics.add(new Graphic(centroid, EXTENT_CENTRE_SYMBOL));
+                            }
+                        }
+                    )
+                }
+            }
 
             _onClearGraphics = function(event) {
                 map.graphics.clear();
@@ -142,7 +186,7 @@
     <div style="height:100%; display: flex; flex-direction: column;">
         <div style="min-height:10px; flex-grow: 1; padding:8px;">
             <input type="button" value="Get Centroid" onclick="_onGetCentroid(event);">
-            <input type="button" value="Get Centre of Extent">
+            <input type="button" value="Get Centre of Extent" onclick="_onExtentCentre(event);">
             <input type="button" value="Clear Graphics" onclick="_onClearGraphics(event);">
         </div>
         <div id="mapDiv"></div>
