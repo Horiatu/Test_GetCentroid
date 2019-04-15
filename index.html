@@ -21,7 +21,30 @@
     <script>
         var map;
 
-        require(["esri/map", "esri/layers/FeatureLayer", "dojo/on", "dojo/domReady!"], function(Map, FeatureLayer, on) {
+        require(["esri/map",
+            "dojo/on", "dojo/Deferred",
+            "dojo/_base/lang", "esri/dijit/Popup",
+            "esri/graphic", "esri/toolbars/draw",
+            "esri/layers/FeatureLayer", "esri/tasks/query",
+            "esri/tasks/GeometryService",
+            "esri/geometry/geometryEngine", "esri/layers/GraphicsLayer",
+            "esri/symbols/SimpleMarkerSymbol",
+            "esri/symbols/SimpleFillSymbol", "esri/symbols/TextSymbol",
+            "esri/Color", "esri/geometry/Point", "esri/geometry/Multipoint",
+            "esri/symbols/Font",
+            "dojo/domReady!"
+        ], function(Map,
+            on, Deferred,
+            lang, Popup,
+            Graphic, Draw,
+            FeatureLayer, Query,
+            GeometryService,
+            geometryEngine, GraphicsLayer,
+            SimpleMarkerSymbol,
+            SimpleFillSymbol,
+            TextSymbol,
+            Color, Point, Multipoint,
+            Font) {
             map = new Map("mapDiv", {
                 basemap: "topo", //For full list of pre-defined basemaps, navigate to http://arcg.is/1JVo6Wd
                 center: [-80.725874, 43.142926], // longitude, latitude
@@ -31,9 +54,81 @@
             const layer = new FeatureLayer("https://services.arcgis.com/zmLUiqh7X11gGV2d/arcgis/rest/services/Woodstock/FeatureServer/2");
             map.addLayer(layer);
 
+            const SELECTED_ADDRESS_SYMBOL = new SimpleMarkerSymbol({
+                name: "selectedAddress",
+                color: [255, 30, 30, 0],
+                size: 10,
+                type: "esriSMS",
+                style: "esriSMSCircle",
+                outline: {
+                    color: [255, 30, 39, 255],
+                    width: 1,
+                    type: "esriSLS",
+                    style: "esriSLSSolid"
+                }
+            });
+
+            const NEW_ADDRESS_SYMBOL = new SimpleMarkerSymbol({
+                name: "newAddress",
+                color: [255, 30, 30, 0],
+                size: 5,
+                type: "esriSMS",
+                style: "esriSMSCircle",
+                outline: {
+                    color: [0, 0, 0, 255],
+                    width: 1,
+                    type: "esriSLS",
+                    style: "esriSLSSolid"
+                }
+            })
+
+            const SELECTED_PARCEL_SYMBOL = new SimpleFillSymbol({
+                name: "selectedParcel",
+                color: [255, 30, 30, 255],
+                style: "esriSFSNull",
+                outline: {
+                    color: [255, 30, 30, 255],
+                    width: 1,
+                    type: "esriSLS",
+                    style: "esriSLSSolid"
+                }
+            });
+
             _onGetCentroid = function(event) {
                 // alert("hi");
                 // console.log("map", map);
+
+                const draw = new Draw(this.map);
+                map.setInfoWindowOnClick(false);
+                map.infoWindow.hide();
+
+                let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, addToMap));
+                draw.activate(Draw.POINT);
+
+                function addToMap(event) {
+                    draw.deactivate();
+                    drawDrawEnd.remove();
+
+                    const q = new Query();
+                    q.outFields = ["OBJECTID"];
+                    q.where = "1=1";
+                    q.geometry = event.geometry;
+                    q.spatialRelationship = "esriSpatialRelIntersects";
+                    q.returnGeometry = true;
+
+                    layer.selectFeatures(
+                        q, FeatureLayer.SELECTION_NEW,
+                        ([parcel]) => {
+                            console.log("parcel", parcel);
+                            if (parcel) {
+                                map.graphics.add(new Graphic(parcel.geometry, SELECTED_PARCEL_SYMBOL));
+
+                                const centroid = parcel.geometry.getCentroid(); //getExtent().getCenter(); 
+                                map.graphics.add(new Graphic(centroid, NEW_ADDRESS_SYMBOL));
+                            }
+                        }
+                    )
+                }
             };
         });
     </script>
