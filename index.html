@@ -21,7 +21,7 @@
     <script>
         var map;
 
-        require(["esri/map", "esri/layers/FeatureLayer", "dojo/domReady!"], function(Map, FeatureLayer) {
+        require(["esri/map", "esri/layers/FeatureLayer", "dojo/on", "dojo/domReady!"], function(Map, FeatureLayer, on) {
             map = new Map("mapDiv", {
                 basemap: "topo", //For full list of pre-defined basemaps, navigate to http://arcg.is/1JVo6Wd
                 center: [-80.725874, 43.142926], // longitude, latitude
@@ -30,13 +30,22 @@
 
             const layer = new FeatureLayer("https://services.arcgis.com/zmLUiqh7X11gGV2d/arcgis/rest/services/Woodstock/FeatureServer/2");
             map.addLayer(layer);
+
+            _onGetCentroid = function(event) {
+                // alert("hi");
+                // console.log("map", map);
+            };
         });
     </script>
 </head>
 
 <body>
     <div style="height:100%; display: flex; flex-direction: column;">
-        <div style="min-height:100px; flex-grow: 1"></div>
+        <div style="min-height:10px; flex-grow: 1; padding:8px;">
+            <input type="button" value="Get Centroid" onclick="_onGetCentroid(event);">
+            <input type="button" value="Get Centre of Extent">
+            <input type="button" value="Clear Graphics">
+        </div>
         <div id="mapDiv"></div>
     </div>
 </body>
