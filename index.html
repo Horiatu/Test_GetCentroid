@@ -130,6 +130,10 @@
                     )
                 }
             };
+
+            _onClearGraphics = function(event) {
+                map.graphics.clear();
+            }
         });
     </script>
 </head>
@@ -139,7 +143,7 @@
         <div style="min-height:10px; flex-grow: 1; padding:8px;">
             <input type="button" value="Get Centroid" onclick="_onGetCentroid(event);">
             <input type="button" value="Get Centre of Extent">
-            <input type="button" value="Clear Graphics">
+            <input type="button" value="Clear Graphics" onclick="_onClearGraphics(event);">
         </div>
         <div id="mapDiv"></div>
     </div>
