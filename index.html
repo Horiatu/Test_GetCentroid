@@ -68,6 +68,20 @@
                 }
             })
 
+            const CENTROID_SYMBOL_2 = new SimpleMarkerSymbol({
+                name: "newAddress",
+                color: [255, 30, 30, 0],
+                size: 7,
+                type: "esriSMS",
+                style: "esriSMSCircle",
+                outline: {
+                    color: [255, 30, 30, 255],
+                    width: 1,
+                    type: "esriSLS",
+                    style: "esriSLSSolid"
+                }
+            })
+
             const EXTENT_CENTRE_SYMBOL = new SimpleMarkerSymbol({
                 name: "newAddress",
                 color: [255, 30, 30, 0],
@@ -237,6 +251,41 @@
                 let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, selectAddressRange));
                 draw.activate(Draw.FREEHAND_POLYLINE);
 
+                const CentroidPoint = function(geometry) {
+                    const [r] = geometry.rings;
+                    const [x0, y0] = r[0]; //[0, 0]; //[-8986569.0867, 5333841.9316]; //;
+                    console.log("[x0, y0]", [x0, y0]);
+                    let sX = 0;
+                    let sY = 0;
+                    let sA = 0;
+                    for (let i = 1; i < r.length; i++) {
+                        let [x, y] = r[i];
+                        let [x_1, y_1] = r[i - 1];
+
+                        x = x - x0;
+                        y = y - y0;
+                        x_1 = x_1 - x0;
+                        y_1 = y_1 - y0;
+
+                        const h = x - x_1;
+                        const a = y;
+                        const b = y_1;
+
+                        const ai = h * (a + b) / 2.0;
+                        const xi = ((b + 2 * a) / (3 * (a + b))) * h;
+                        const yi = (((b + 2 * a) / (3 * (a + b))) * (a - b) + b) / 2.0;
+
+                        sX += xi * ai;
+                        sY += yi * ai;
+                        sA += ai;
+                    }
+                    const x = x0 + sX / sA;
+                    const y = y0 + sY / sA;
+                    console.log("sX , sY, sA", sX, sY, sA);
+                    console.log("x , y", x, y);
+                    return [x, y];
+                }
+
                 function selectAddressRange(evt) {
                     draw.deactivate();
                     drawDrawEnd.remove();
@@ -250,54 +299,16 @@
                     q.spatialRelationship = "esriSpatialRelCrosses";
                     q.returnGeometry = true;
 
-                    const wkid = layer.spatialReference;
                     layer.selectFeatures(
                         q, FeatureLayer.SELECTION_NEW,
                         parcels => {
-
                             parcels.forEach(parcel => {
-                                const CentroidPoint = function(geometry) {
-                                    const [r] = geometry.rings;
-                                    const [x0, y0] = r[0]; //[0, 0]; //[-8986569.0867, 5333841.9316]; //r[0];
-                                    console.log("r0", r[0]);
-                                    let sX = 0;
-                                    let sY = 0;
-                                    let sA = 0;
-                                    for (let i = 1; i < r.length; i++) {
-                                        let [x, y] = r[i];
-                                        let [x_1, y_1] = r[i - 1];
-
-                                        x = x - x0;
-                                        y = y - y0;
-                                        x_1 = x_1 - x0;
-                                        y_1 = y_1 - y0;
-
-                                        const h = x - x_1;
-                                        const a = y;
-                                        const b = y_1;
-
-                                        const ai = (a + b) / 2 * h;
-                                        const xi = x0 + ((b - 2 * a) / 3 / (a + b)) * h;
-                                        const yi = y0 + a / 2 * ((b - 2 * a) / 3 / (a + b)); // * h / h
-                                        sA += a;
-
-                                        sX += xi * ai;
-                                        sY += yi * ai;
-                                        sA += ai;
-
-                                    }
-                                    const x = sX / sA;
-                                    const y = sY / sA;
-                                    console.log("sX , sY, sA", sX, sY, sA);
-                                    console.log("x , y", x, y);
-                                    return new Point(x, y, wkid);
-                                }
                                 console.log("parcel", parcel);
                                 if (parcel) {
                                     map.graphics.add(new Graphic(parcel.geometry, PARCEL_SYMBOL));
 
                                     const centroid = CentroidPoint(parcel.geometry);
-                                    map.graphics.add(new Graphic(centroid, CENTROID_SYMBOL));
+                                    map.graphics.add(new Graphic(new Point(centroid, this.map.spatialReference), CENTROID_SYMBOL_2));
                                 }
                             })
                         }
