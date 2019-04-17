@@ -175,6 +175,55 @@
                 }
             }
 
+            _onCalculateCentre = function(event) {
+                const draw = new Draw(this.map);
+                map.setInfoWindowOnClick(false);
+                map.infoWindow.hide();
+
+                let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, addToMap));
+                draw.activate(Draw.POINT);
+
+                function addToMap(event) {
+                    draw.deactivate();
+                    drawDrawEnd.remove();
+
+                    const q = new Query();
+                    q.outFields = ["OBJECTID"];
+                    q.where = "1=1";
+                    q.geometry = event.geometry;
+                    q.spatialRelationship = "esriSpatialRelIntersects";
+                    q.returnGeometry = true;
+
+                    layer.selectFeatures(
+                        q, FeatureLayer.SELECTION_NEW,
+                        ([parcel]) => {
+                            const CentroidPoint = function(geometry) {
+                                // console.log("geometry", geometry, this.map);
+
+                                const [r] = geometry.rings;
+                                let xm = 0;
+                                let ym = 0;
+                                let n = 0;
+                                for (let i = 1; i < r.length; i++) {
+                                    const [x, y] = r[i];
+                                    xm += x;
+                                    ym += y;
+                                    n++
+                                }
+                                return new Point(xm / n, ym / n, this.map.spatialReference);
+                            }
+                            console.log("parcel", parcel);
+                            if (parcel) {
+                                map.graphics.add(new Graphic(parcel.geometry, PARCEL_SYMBOL));
+
+                                const centroid = CentroidPoint(parcel.geometry);
+                                map.graphics.add(new Graphic(centroid, CENTROID_SYMBOL));
+                            }
+                        }
+                    )
+                }
+            }
+
             _onClearGraphics = function(event) {
                 map.graphics.clear();
             }
@@ -187,6 +236,7 @@
         <div style="min-height:10px; flex-grow: 1; padding:8px;">
             <input type="button" value="Get Centroid" onclick="_onGetCentroid(event);">
             <input type="button" value="Get Centre of Extent" onclick="_onExtentCentre(event);">
+            <input type="button" value="Brute Force" onclick="_onCalculateCentre(event);">
             <input type="button" value="Clear Graphics" onclick="_onClearGraphics(event);">
         </div>
         <div id="mapDiv"></div>
