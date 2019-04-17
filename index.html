@@ -229,6 +229,82 @@
                 }
             }
 
+            _onCalculateTrueCentre = function(event) {
+                const draw = new Draw(this.map);
+                map.setInfoWindowOnClick(false);
+                map.infoWindow.hide();
+
+                let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, selectAddressRange));
+                draw.activate(Draw.FREEHAND_POLYLINE);
+
+                function selectAddressRange(evt) {
+                    draw.deactivate();
+                    drawDrawEnd.remove();
+
+                    // const buffer = geometryEngine.buffer(evt.geometry, 5, GeometryService.UNIT_METER);
+
+                    const q = new Query();
+                    q.outFields = ["OBJECTID"];
+                    q.where = "1=1";
+                    q.geometry = evt.geometry;
+                    q.spatialRelationship = "esriSpatialRelCrosses";
+                    q.returnGeometry = true;
+
+                    const wkid = layer.spatialReference;
+                    layer.selectFeatures(
+                        q, FeatureLayer.SELECTION_NEW,
+                        parcels => {
+
+                            parcels.forEach(parcel => {
+                                const CentroidPoint = function(geometry) {
+                                    const [r] = geometry.rings;
+                                    const [x0, y0] = r[0]; //[0, 0]; //[-8986569.0867, 5333841.9316]; //r[0];
+                                    console.log("r0", r[0]);
+                                    let sX = 0;
+                                    let sY = 0;
+                                    let sA = 0;
+                                    for (let i = 1; i < r.length; i++) {
+                                        let [x, y] = r[i];
+                                        let [x_1, y_1] = r[i - 1];
+
+                                        x = x - x0;
+                                        y = y - y0;
+                                        x_1 = x_1 - x0;
+                                        y_1 = y_1 - y0;
+
+                                        const h = x - x_1;
+                                        const a = y;
+                                        const b = y_1;
+
+                                        const ai = (a + b) / 2 * h;
+                                        const xi = x0 + ((b - 2 * a) / 3 / (a + b)) * h;
+                                        const yi = y0 + a / 2 * ((b - 2 * a) / 3 / (a + b)); // * h / h
+                                        sA += a;
+
+                                        sX += xi * ai;
+                                        sY += yi * ai;
+                                        sA += ai;
+
+                                    }
+                                    const x = sX / sA;
+                                    const y = sY / sA;
+                                    console.log("sX , sY, sA", sX, sY, sA);
+                                    console.log("x , y", x, y);
+                                    return new Point(x, y, wkid);
+                                }
+                                console.log("parcel", parcel);
+                                if (parcel) {
+                                    map.graphics.add(new Graphic(parcel.geometry, PARCEL_SYMBOL));
+
+                                    const centroid = CentroidPoint(parcel.geometry);
+                                    map.graphics.add(new Graphic(centroid, CENTROID_SYMBOL));
+                                }
+                            })
+                        }
+                    )
+                }
+            }
+
             _onClearGraphics = function(event) {
                 map.graphics.clear();
             }
@@ -242,6 +318,7 @@
             <input type="button" value="Get Centroid" onclick="_onGetCentroid(event);">
             <input type="button" value="Get Centre of Extent" onclick="_onExtentCentre(event);">
             <input type="button" value="Brute Force" onclick="_onCalculateCentre(event);">
+            <input type="button" value="True Brute Force" onclick="_onCalculateTrueCentre(event);">
             <input type="button" value="Clear Graphics" onclick="_onClearGraphics(event);">
         </div>
         <div id="mapDiv"></div>
