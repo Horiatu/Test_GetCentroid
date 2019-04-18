@@ -269,7 +269,7 @@
                     let x0 = Math.min(...r.map(([x, y]) => x));
                     let y0 = Math.min(...r.map(([x, y]) => y));
 
-                    map.graphics.add(new Graphic(new Point(x0, y0, this.map.spatialReference), CROSS_SYMBOL));
+                    // map.graphics.add(new Graphic(new Point(x0, y0, this.map.spatialReference), CROSS_SYMBOL));
                     // r.forEach(c => {
                     //     map.graphics.add(new Graphic(new Point(c, this.map.spatialReference), CROSS_SYMBOL));
                     // })
@@ -281,16 +281,16 @@
                         let [x, y] = r[i];
                         let [x_1, y_1] = r[i - 1];
 
-                        const p = new Polygon(this.map.spatialReference);
-                        p.rings = [
-                            [
-                                [x_1, y0],
-                                [x_1, y_1],
-                                [x, y],
-                                [x, y0]
-                            ]
-                        ];
-                        const g = new Graphic(p, EXTENT_SYMBOL);
+                        // const p = new Polygon(this.map.spatialReference);
+                        // p.rings = [
+                        //     [
+                        //         [x_1, y0],
+                        //         [x_1, y_1],
+                        //         [x, y],
+                        //         [x, y0]
+                        //     ]
+                        // ];
+                        // const g = new Graphic(p, EXTENT_SYMBOL);
 
                         // x = x - x0;
                         // y = y - y0;
@@ -306,9 +306,9 @@
                         const yi = (((b + 2 * a) / (3 * (a + b))) * (a - b) + b) / 2.0;
 
                         // g.symbol.color.a = (ai < 0) ? 0.5 : 0;
-                        map.graphics.add(g);
+                        // map.graphics.add(g);
 
-                        map.graphics.add(new Graphic(new Point(x0 + xi, y0 + yi, this.map.spatialReference), CENTROID_SYMBOL));
+                        // map.graphics.add(new Graphic(new Point(x0 + xi, y0 + yi, this.map.spatialReference), CENTROID_SYMBOL));
 
 
                         sX += xi * ai;
