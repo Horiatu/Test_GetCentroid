@@ -264,7 +264,6 @@
 
                 const CentroidPoint = function(geometry) {
                     const [r] = geometry.rings;
-                    // let [x0, y0] = r[0]; //[0, 0]; //[-8986569.0867, 5333841.9316]; //;
 
                     let x0 = Math.min(...r.map(([x, y]) => x));
                     let y0 = Math.min(...r.map(([x, y]) => y));
@@ -273,7 +272,7 @@
                     // r.forEach(c => {
                     //     map.graphics.add(new Graphic(new Point(c, this.map.spatialReference), CROSS_SYMBOL));
                     // })
-                    console.log("[x0, y0]", [x0, y0]);
+                    // console.log("[x0, y0]", [x0, y0]);
                     let sX = 0;
                     let sY = 0;
                     let sA = 0;
@@ -290,12 +289,7 @@
                         //         [x, y0]
                         //     ]
                         // ];
-                        // const g = new Graphic(p, EXTENT_SYMBOL);
-
-                        // x = x - x0;
-                        // y = y - y0;
-                        // x_1 = x_1 - x0;
-                        // y_1 = y_1 - y0;
+                        // map.graphics.add(new Graphic(p, EXTENT_SYMBOL));
 
                         const h = x - x_1;
                         const a = y - y0;
@@ -305,11 +299,7 @@
                         const xi = x_1 - x0 + ((b + 2 * a) / (3 * (a + b))) * h;
                         const yi = (((b + 2 * a) / (3 * (a + b))) * (a - b) + b) / 2.0;
 
-                        // g.symbol.color.a = (ai < 0) ? 0.5 : 0;
-                        // map.graphics.add(g);
-
                         // map.graphics.add(new Graphic(new Point(x0 + xi, y0 + yi, this.map.spatialReference), CENTROID_SYMBOL));
-
 
                         sX += xi * ai;
                         sY += yi * ai;
@@ -317,8 +307,8 @@
                     }
                     const x = x0 + sX / sA;
                     const y = y0 + sY / sA;
-                    console.log("sX , sY, sA", sX, sY, sA);
-                    console.log("x , y", x, y);
+                    // console.log("sX , sY, sA", sX, sY, sA);
+                    // console.log("x , y", x, y);
                     return [x, y];
                 }
 
@@ -342,7 +332,7 @@
                             parcels.forEach(parcel => {
                                 console.log("parcel", parcel);
                                 if (parcel) {
-                                    // map.graphics.add(new Graphic(parcel.geometry, PARCEL_SYMBOL));
+                                    map.graphics.add(new Graphic(parcel.geometry, PARCEL_SYMBOL));
 
                                     const centroid = CentroidPoint(parcel.geometry);
                                     map.graphics.add(new Graphic(new Point(centroid, this.map.spatialReference), CENTROID_SYMBOL_2));
