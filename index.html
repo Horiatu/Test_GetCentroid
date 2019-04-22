@@ -139,30 +139,34 @@
                 map.setInfoWindowOnClick(false);
                 map.infoWindow.hide();
 
-                let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, addToMap));
-                draw.activate(Draw.POINT);
+                let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, selectAddressRange));
+                draw.activate(Draw.FREEHAND_POLYLINE);
 
-                function addToMap(event) {
+                function selectAddressRange(evt) {
                     draw.deactivate();
                     drawDrawEnd.remove();
+
+                    // const buffer = geometryEngine.buffer(evt.geometry, 5, GeometryService.UNIT_METER);
 
                     const q = new Query();
                     q.outFields = ["OBJECTID"];
                     q.where = "1=1";
-                    q.geometry = event.geometry;
-                    q.spatialRelationship = "esriSpatialRelIntersects";
+                    q.geometry = evt.geometry;
+                    q.spatialRelationship = "esriSpatialRelCrosses";
                     q.returnGeometry = true;
 
                     layer.selectFeatures(
                         q, FeatureLayer.SELECTION_NEW,
-                        ([parcel]) => {
-                            console.log("parcel", parcel);
-                            if (parcel) {
-                                map.graphics.add(new Graphic(parcel.geometry, PARCEL_SYMBOL));
+                        parcels => {
+                            parcels.forEach(parcel => {
+                                console.log("parcel", parcel);
+                                if (parcel) {
+                                    map.graphics.add(new Graphic(parcel.geometry, PARCEL_SYMBOL));
 
-                                const centroid = parcel.geometry.getCentroid();
-                                map.graphics.add(new Graphic(centroid, CENTROID_SYMBOL));
-                            }
+                                    const centroid = parcel.geometry.getCentroid();
+                                    map.graphics.add(new Graphic(centroid, CENTROID_SYMBOL));
+                                }
+                            })
                         }
                     )
                 }
@@ -173,31 +177,35 @@
                 map.setInfoWindowOnClick(false);
                 map.infoWindow.hide();
 
-                let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, addToMap));
-                draw.activate(Draw.POINT);
+                let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, selectAddressRange));
+                draw.activate(Draw.FREEHAND_POLYLINE);
 
-                function addToMap(event) {
+                function selectAddressRange(evt) {
                     draw.deactivate();
                     drawDrawEnd.remove();
+
+                    // const buffer = geometryEngine.buffer(evt.geometry, 5, GeometryService.UNIT_METER);
 
                     const q = new Query();
                     q.outFields = ["OBJECTID"];
                     q.where = "1=1";
-                    q.geometry = event.geometry;
-                    q.spatialRelationship = "esriSpatialRelIntersects";
+                    q.geometry = evt.geometry;
+                    q.spatialRelationship = "esriSpatialRelCrosses";
                     q.returnGeometry = true;
 
                     layer.selectFeatures(
                         q, FeatureLayer.SELECTION_NEW,
-                        ([parcel]) => {
-                            console.log("parcel", parcel);
-                            if (parcel) {
-                                const extent = parcel.geometry.getExtent();
-                                map.graphics.add(new Graphic(extent, EXTENT_SYMBOL));
+                        parcels => {
+                            parcels.forEach(parcel => {
+                                console.log("parcel", parcel);
+                                if (parcel) {
+                                    const extent = parcel.geometry.getExtent();
+                                    map.graphics.add(new Graphic(extent, EXTENT_SYMBOL));
 
-                                const centroid = extent.getCenter();
-                                map.graphics.add(new Graphic(centroid, EXTENT_CENTRE_SYMBOL));
-                            }
+                                    const centroid = extent.getCenter();
+                                    map.graphics.add(new Graphic(centroid, EXTENT_CENTRE_SYMBOL));
+                                }
+                            })
                         }
                     )
                 }
