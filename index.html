@@ -278,8 +278,8 @@
 
                     // map.graphics.add(new Graphic(new Point(x0, y0, this.map.spatialReference), CROSS_SYMBOL));
                     // r.forEach(c => {
-                    //     map.graphics.add(new Graphic(new Point(c, this.map.spatialReference), CROSS_SYMBOL));
-                    // })
+                    //         map.graphics.add(new Graphic(new Point(c, this.map.spatialReference), CROSS_SYMBOL));
+                    //     })
                     // console.log("[x0, y0]", [x0, y0]);
                     let sX = 0;
                     let sY = 0;
@@ -317,7 +317,14 @@
                     const y = y0 + sY / sA;
                     // console.log("sX , sY, sA", sX, sY, sA);
                     // console.log("x , y", x, y);
-                    return [x, y];
+
+                    const coordinates = [x, y];
+                    if (geometryEngine.within(new Point(coordinates), geometry)) {
+                        return coordinates;
+                    } else {
+                        const point = geometryEngine.nearestCoordinate(geometry, new Point(coordinates));
+                        return [point.coordinate.x, point.coordinate.y];
+                    }
                 }
 
                 let drawDrawEnd = draw.on("draw-complete", lang.hitch(this, selectParcelRange));
